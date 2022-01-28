@@ -85,7 +85,7 @@ async def fetch_info(replied_user, event):
     caption += f"Is Bot: {is_bot} \n"
     caption += f"ID: <code>{user_id}</code> \n \n"
     caption += f"Bio: \n<code>{user_bio}</code>"
-    
+
     if user_id == OWNER_ID:
         caption += "\n\n<i>Aye this guy is my owner.\nI would never do anything against him!</i>"
 
@@ -106,17 +106,14 @@ async def fetch_info(replied_user, event):
             "\n\n<i>This person has been whitelisted! "
             "That means I'm not allowed to ban/kick them.</i>"
         )
-    
+
     try:
-        sw = spamwtc.get_ban(int(user_id))
-        if sw:
+        if sw := spamwtc.get_ban(int(user_id)):
             caption += "\n\n<i>This person is banned in Spamwatch!</i>"
             caption += f"\nResason: <i>{sw.reason}</i>"
-        else:
-            pass
     except:
         pass  # Don't break on exceptions like if api is down?
-    
+
     for mod in USER_INFO:
         try:
             mod_info = mod.__user_info__(user_id).strip()
@@ -124,11 +121,11 @@ async def fetch_info(replied_user, event):
             mod_info = mod.__user_info__(user_id, chat).strip()
         if mod_info:
             caption += "\n\n" + mod_info
-        
-    
-    caption += f"\nPermanent Link To Profile: "
+
+
+    caption += '\nPermanent Link To Profile: '
     caption += f"<a href=\"tg://user?id={user_id}\">{first_name}</a>"
-    
+
     return caption
 
 @client.on(events.NewMessage(pattern="^[!/]id(?: |$)(.*)"))
@@ -221,7 +218,7 @@ def markdown_help(update, context):
 def wiki(update, context):
     kueri = re.split(pattern="wiki", string=update.effective_message.text)
     wikipedia.set_lang("en")
-    if len(str(kueri[1])) == 0:
+    if not str(kueri[1]):
         update.effective_message.reply_text("Enter keywords!")
     else:
         try:
@@ -292,9 +289,8 @@ def src(update, context):
 @run_async
 @typing_action
 def getlink(update, context):
-    args = context.args
     message = update.effective_message
-    if args:
+    if args := context.args:
         pattern = re.compile(r"-\d+")
     else:
         message.reply_text("You don't seem to be referring to any chats.")

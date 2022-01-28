@@ -68,7 +68,7 @@ def new_fed(update, context):
                      "Please write the name of the federation!")
         return
     fednam = message.text.split(None, 1)[1]
-    if not fednam == '':
+    if fednam != '':
         fed_id = str(uuid.uuid4())
         fed_name = fednam
         LOGGER.info(fed_id)
@@ -209,18 +209,13 @@ def join_fed(update, context):
     administrators = chat.get_administrators()
     fed_id = sql.get_fed_id(chat.id)
 
-    if user.id in SUDO_USERS:
-        pass
-    else:
+    if user.id not in SUDO_USERS:
         for admin in administrators:
             status = admin.status
-            if status == "creator":
-                if str(admin.user.id) == str(user.id):
-                    pass
-                else:
-                    update.effective_message.reply_text(
-                        "Only group creators can use this command!")
-                    return
+            if status == "creator" and str(admin.user.id) != str(user.id):
+                update.effective_message.reply_text(
+                    "Only group creators can use this command!")
+                return
     if fed_id:
         message.reply_text("You cannot join two federations from one chat")
         return
@@ -238,8 +233,7 @@ def join_fed(update, context):
             )
             return
 
-        get_fedlog = sql.get_fed_log(args[0])
-        if get_fedlog:
+        if get_fedlog := sql.get_fed_log(args[0]):
             if eval(get_fedlog):
                 bot.send_message(
                     get_fedlog,
@@ -269,8 +263,7 @@ def leave_fed(update, context):
     getuser = bot.get_chat_member(chat.id, user.id).status
     if getuser in 'creator' or user.id in SUDO_USERS:
         if sql.chat_leave_fed(chat.id) is True:
-            get_fedlog = sql.get_fed_log(fed_id)
-            if get_fedlog:
+            if get_fedlog := sql.get_fed_log(fed_id):
                 if eval(get_fedlog):
                     bot.send_message(
                         get_fedlog,
@@ -357,7 +350,7 @@ def user_join_fed(update, context):
             "Only federation owners can do this!")
 
 def fpro_callback(update,context):
-    chat = update.effective_chat  
+    chat = update.effective_chat
     fed_id = sql.get_fed_id(chat.id)
     query = update.callback_query
     splitter = query.data.split("=")
@@ -366,10 +359,8 @@ def fpro_callback(update,context):
     member = chat.get_member(int(user_id))
     if query_match == "fpromote_confirm":
         if int(user_id) == query.from_user.id:
-            res = sql.user_join_fed(fed_id, int(user_id))
-            if res:
-                fban = sql.get_fban_user(fed_id, user_id)
-                if fban:
+            if res := sql.user_join_fed(fed_id, int(user_id)):
+                if fban := sql.get_fban_user(fed_id, user_id):
                     info = sql.get_fed_info(fed_id)
                     fed_name = info['fname']
                 query.message.edit_text("User {} is now an admin of {} ({})"
@@ -389,7 +380,7 @@ def fpro_callback(update,context):
                 .format(mention_html(member.user.id, member.user.first_name),
                                                             fed_name, fed_id,),
                                         parse_mode=ParseMode.HTML
-                                    
+
             )
             context.bot.answer_callback_query(query.id,
                                               text="Cancelled!"
@@ -460,15 +451,13 @@ def fed_info(update, context):
     user = update.effective_user
     if args:
         fed_id = args[0]
-        info = sql.get_fed_info(fed_id)
     else:
         fed_id = sql.get_fed_id(chat.id)
         if not fed_id:
             send_message(update.effective_message,
                          "This group is not in any federation!")
             return
-        info = sql.get_fed_info(fed_id)
-
+    info = sql.get_fed_info(fed_id)
     if is_user_fed_admin(fed_id, user.id) is False:
         update.effective_message.reply_text(
             "Only a federation admin can do this!")

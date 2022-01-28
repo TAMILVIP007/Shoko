@@ -160,9 +160,7 @@ def new_member(update, context):
         for new_mem in new_members:
 
             reply = update.message.message_id
-            cleanserv = sql.clean_service(chat.id)
-            # Clean service welcome
-            if cleanserv:
+            if cleanserv := sql.clean_service(chat.id):
                 try:
                     dispatcher.bot.delete_message(chat.id, update.message.message_id)
                 except BadRequest:
@@ -171,8 +169,7 @@ def new_member(update, context):
 
             # Ignore spamwatch banned users
             try:
-                sw = spamwtc.get_ban(int(new_mem.id))
-                if sw:
+                if sw := spamwtc.get_ban(int(new_mem.id)):
                     return
             except Exception:
                 pass
@@ -189,7 +186,6 @@ def new_member(update, context):
                 )
                 continue
 
-            # Make bot greet admins
             elif new_mem.id == context.bot.id:
                 update.effective_message.reply_text(
                     "Hey {}, I'm {}! Thank you for adding me to {}"
@@ -208,7 +204,7 @@ def new_member(update, context):
                 )
             else:
                 # If welcome message is media, send with appropriate function
-                if welc_type != sql.Types.TEXT and welc_type != sql.Types.BUTTON_TEXT:
+                if welc_type not in [sql.Types.TEXT, sql.Types.BUTTON_TEXT]:
                     sent = ENUM_FUNC_MAP[welc_type](chat.id, cust_welcome)
                     # print(bool(sent))
                     continue
@@ -224,11 +220,7 @@ def new_member(update, context):
                         fullname = first_name
                     count = chat.get_members_count()
                     mention = mention_html(new_mem.id, first_name)
-                    if new_mem.username:
-                        username = "@" + escape(new_mem.username)
-                    else:
-                        username = mention
-
+                    username = "@" + escape(new_mem.username) if new_mem.username else mention
                     valid_format = escape_invalid_curly_brackets(
                         cust_welcome, VALID_WELCOME_FORMATTERS
                     )
@@ -315,8 +307,7 @@ def new_member(update, context):
                             can_add_web_page_previews=False,
                         ),
                     )
-        prev_welc = sql.get_clean_pref(chat.id)
-        if prev_welc:
+        if prev_welc := sql.get_clean_pref(chat.id):
             try:
                 context.bot.delete_message(chat.id, prev_welc)
             except BadRequest:
@@ -333,26 +324,21 @@ def left_member(update, context):
     cust_goodbye = markdown_to_html(cust_goodbye)
     if should_goodbye:
         reply = update.message.message_id
-        cleanserv = sql.clean_service(chat.id)
-        # Clean service welcome
-        if cleanserv:
+        if cleanserv := sql.clean_service(chat.id):
             try:
                 dispatcher.bot.delete_message(chat.id, update.message.message_id)
             except BadRequest:
                 pass
             reply = False
 
-        left_mem = update.effective_message.left_chat_member
-        if left_mem:
-
+        if left_mem := update.effective_message.left_chat_member:
             # Ignore gbanned users
             if is_user_gbanned(left_mem.id):
                 return
 
             # Ignore spamwatch banned users
             try:
-                sw = spamwtc.get_ban(int(left_mem.id))
-                if sw:
+                if sw := spamwtc.get_ban(int(left_mem.id)):
                     return
             except:
                 pass
@@ -369,7 +355,7 @@ def left_member(update, context):
                 return
 
             # if media goodbye, use appropriate function for it
-            if goodbye_type != sql.Types.TEXT and goodbye_type != sql.Types.BUTTON_TEXT:
+            if goodbye_type not in [sql.Types.TEXT, sql.Types.BUTTON_TEXT]:
                 ENUM_FUNC_MAP[goodbye_type](chat.id, cust_goodbye)
                 return
 
@@ -383,11 +369,7 @@ def left_member(update, context):
                     fullname = first_name
                 count = chat.get_members_count()
                 mention = mention_html(left_mem.id, first_name)
-                if left_mem.username:
-                    username = "@" + escape(left_mem.username)
-                else:
-                    username = mention
-
+                username = "@" + escape(left_mem.username) if left_mem.username else mention
                 valid_format = escape_invalid_curly_brackets(
                     cust_goodbye, VALID_WELCOME_FORMATTERS
                 )
